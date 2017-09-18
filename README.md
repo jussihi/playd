@@ -11,5 +11,5 @@ Its audio interface is based on ALSA, so you should be using Linux. I might also
 Build with make. It should build as long as ALSA is present on the machine. Purple Motion's "Starshine" is included as a test track. Here's from theres:
 ```sh
 $ make
-$ ./playd strshn.s3m
+$ ./playd strshine.s3m
 ```
