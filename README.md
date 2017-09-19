@@ -8,8 +8,10 @@ Its audio interface is based on ALSA, so you should be using Linux. I might also
 
 # How to use
 
-Build with make. It should build as long as ALSA is present on the machine. Purple Motion's "Starshine" is included as a test track. Here's from theres:
+Build with make. It should build as long as ALSA is present on the machine. Purple Motion's "Starshine" is included as a test track. Here's from theres (example for ubuntu machines with alsa library installation):
+
 ```sh
+$ sudo apt-get install alsa-lib
 $ make
 $ ./playd strshine.s3m
 ```
