@@ -3,7 +3,7 @@ CC       = gcc
 OBJ      = main.o s3mContainer.o ALSAPlayer.o
 LINKOBJ  = main.o s3mContainer.o ALSAPlayer.o
 LIBS     = -lasound
-CXXFLAGS = -std=c++11 -Wall
+CXXFLAGS = -std=c++14 -Wall
 BIN	 = playd
 
 .PHONY: all all-before all-after clean clean-custom

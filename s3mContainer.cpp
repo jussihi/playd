@@ -50,6 +50,7 @@ double s3mContainer::loadSample(const Instrument& ins, double& s, double incRate
 	return retVal;
 }
 
+static int periodic = 0;
 
 Slot s3mContainer::readSlot(const byte*& pSlot)
 {
@@ -126,25 +127,25 @@ void s3mContainer::loadSong(const char* filename)
 
 	// make room for orders and read them from the file pointer initialized before
 	// also set every order to idle in the beginning
-	m_orders = new byte[m_ordersNum];
-	memset(m_orders, 255, m_ordersNum);
-	fread(m_orders, 1, m_ordersNum, fp);
+	m_orders = std::make_unique<byte[]>(m_ordersNum);
+	memset(m_orders.get(), 255, m_ordersNum);
+	fread(m_orders.get(), 1, m_ordersNum, fp);
 
 	// make room for parapointers and read them from the same file pointer
 	std::cout << "Total " << m_instrumentNum << " instruments read:\n" << std::endl;
-	m_instrumentPPs = new uint16_t[m_instrumentNum];
-	m_patternPPs = new uint16_t[m_patternNum];
+	m_instrumentPPs = std::make_unique<uint16_t[]>(m_instrumentNum);
+	m_patternPPs = std::make_unique<uint16_t[]>(m_patternNum);
 
-	fread(m_instrumentPPs, 2, m_instrumentNum, fp);
-	fread(m_patternPPs, 2, m_patternNum, fp);
+	fread(m_instrumentPPs.get(), 2, m_instrumentNum, fp);
+	fread(m_patternPPs.get(), 2, m_patternNum, fp);
 
-	m_instruments = new Instrument[m_instrumentNum];
+	m_instruments = std::make_unique<Instrument[]>(m_instrumentNum);
 
 	// read instruments to memory
 	for(uint32_t i=0; i < m_instrumentNum; i++)
 	{
 		Instrument& ins = m_instruments[i];
-		fseek(fp, m_instrumentPPs[i] *16 , SEEK_SET);
+		fseek(fp, m_instrumentPPs.get()[i] *16 , SEEK_SET);
 
 		// might still not work
 		// works at least some way ...
@@ -663,6 +664,8 @@ void s3mContainer::playSong()
 						{
 							m_player->writeAudio(mixBuff, 1024);
 							mixBuffPos = 0;
+							periodic++;
+							//std::cout << periodic << std::endl;
 						}
 
 						currTime += 1.0;

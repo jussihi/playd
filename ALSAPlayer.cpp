@@ -28,6 +28,8 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 	uint32_t tmp;
 	uint32_t buff_size;
 
+	snd_pcm_uframes_t frames;
+
 	int dir = 0;
 
 	/* Open the PCM device in playback mode */
@@ -58,10 +60,18 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 	{
 		printf("ERROR: Can't set rate. %s\n", snd_strerror(pcm));
 	}
+	pcm = snd_pcm_hw_params_set_periods(pcm_handle, params, 4, 0);
+	if(pcm != 0)
+	{
+		printf("ERROR: Can't set the number of periods. Error message: %s\n", snd_strerror(pcm));
+	}
+	unsigned int u = 2;
 
 	// force the ALSA interface to use exactly *m_frames* number of frames
-
-	snd_pcm_hw_params_set_period_size(pcm_handle, params, m_frames, dir);
+	if(snd_pcm_hw_params_set_period_size(pcm_handle, params, m_frames, dir) < 0)
+	{
+		printf("ERROR: Can't set period size.\n");
+	}
 
 	/* Write parameters */
 	if ((pcm = snd_pcm_hw_params(pcm_handle, params)) < 0)

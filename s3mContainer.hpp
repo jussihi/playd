@@ -12,6 +12,7 @@
 #include "ALSAPlayer.hpp"
 #include <stdio.h>
 #include <vector>
+#include <memory>
 
 struct Instrument{
 	byte type;
@@ -145,15 +146,19 @@ private:
 										// bits 0-7: channel type
 										// 0..7 Left sample, 8..15 right sample, 16..31 Adlib channels (9 melody + 5 drums)
 
-	byte* m_orders;						// orders stored in a byte array
+	std::unique_ptr<byte[]> m_orders;	// orders stored in a byte array
 
-	uint16_t* m_instrumentPPs;			// parapointers to instruments
-	uint16_t* m_patternPPs;				// parapointers to patterns
+	std::unique_ptr<uint16_t[]> m_instrumentPPs;	// parapointers to instrus
+	std::unique_ptr<uint16_t[]> m_patternPPs;		// parapointers to patterns
 
-	Instrument* m_instruments;			// instrument array
+	std::unique_ptr<Instrument[]> m_instruments;	// instrument array
 
-	byte** m_patternData;				// pattern data
-	byte** m_patternEnd;				// pattern endings
+	byte** m_patternData;
+	byte** m_patternEnd;
+
+	// TODO:
+	// std::vector<std::shared_ptr<byte[]>> m_patternData;	// pattern data
+	// std::vector<std::shared_ptr<byte[]>> m_patternEnd;	// pattern endings
 
 	ALSAPlayer* m_player;				// ALSA Player class
 
