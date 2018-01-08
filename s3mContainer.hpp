@@ -10,6 +10,7 @@
 
 #include "Types.hpp"
 #include "ALSAPlayer.hpp"
+#include "MultiBuffer.hpp"
 #include <stdio.h>
 #include <vector>
 #include <memory>
@@ -29,16 +30,20 @@ struct Instrument{
 	byte flags;
 	uint32_t c4Speed;
 	byte* sampleData;
+	byte* sampleDataL;
+	byte* sampleDataR;
 	double c4SpeedFactor;
 	byte name[28];
 	byte scrs[4];
+	bool stereo;
 
 	Instrument () :
 		type(0),
 		length(0),
 		loopBegin(0),
 		loopEnd(0),
-		c4Speed(0)
+		c4Speed(0),
+		stereo(false)
 	{}
 };
 
@@ -118,6 +123,8 @@ private:
 
 	static double loadSample(const Instrument& ins, double& s, double incRate);
 
+	static bool loadStereoSample(const Instrument& ins, double& s, double incRate, double& retL, double& retR);
+
 
 	/*
 	 * Member variables
@@ -163,6 +170,8 @@ private:
 	ALSAPlayer* m_player;				// ALSA Player class
 
 	uint32_t m_audioBufferSize;			// size of audio buffer
+
+	MultiBuffer* m_MBuffer;				// multibuffer class instance
 
 }; // end class s3mContainer
 

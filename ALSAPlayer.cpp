@@ -33,20 +33,26 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 	int dir = 0;
 
 	/* Open the PCM device in playback mode */
-	if ((pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, 0)) < 0)
+
+	pcm = snd_pcm_open(&pcm_handle, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, 0);
+
+	if (pcm < 0)
 	{
 		printf("ERROR: Can't open \"%s\" PCM device. %s\n", PCM_DEVICE, snd_strerror(pcm));
 	}
 	snd_pcm_hw_params_alloca(&params);
 
-	snd_pcm_hw_params_any(pcm_handle, params);
+	if ((pcm = snd_pcm_hw_params_any(pcm_handle, params)) < 0)
+	{
+		printf("ERROR: Param setting fails %s\n", snd_strerror(pcm));
+	}
 
 	if ((pcm = snd_pcm_hw_params_set_access(pcm_handle, params, SND_PCM_ACCESS_RW_INTERLEAVED)) < 0)
 	{
 		printf("ERROR: Can't set interleaved mode. %s\n", snd_strerror(pcm));
 	}
 
-	if ((pcm = snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_S8)) < 0)
+	if ((pcm = snd_pcm_hw_params_set_format(pcm_handle, params, SND_PCM_FORMAT_U8)) < 0)
 	{
 		printf("ERROR: Can't set format. %s\n", snd_strerror(pcm));
 	}
@@ -68,9 +74,11 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 	unsigned int u = 2;
 
 	// force the ALSA interface to use exactly *m_frames* number of frames
-	if(snd_pcm_hw_params_set_period_size(pcm_handle, params, m_frames, dir) < 0)
+
+	pcm = snd_pcm_hw_params_set_period_size(pcm_handle, params, m_frames, dir);
+	if(pcm < 0)
 	{
-		printf("ERROR: Can't set period size.\n");
+		printf("ERROR: Can't set period size. %s\n", snd_strerror(pcm));
 	}
 
 	/* Write parameters */
@@ -85,16 +93,21 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 	snd_pcm_hw_params_get_channels(params, &tmp);
 	std::cout << "ALSA output device channels:    " << tmp << std::endl;
 
+	snd_pcm_format_t format;
+
+	snd_pcm_hw_params_get_format(params, &format);
+	std::cout << "ALSA output device format:      " << format << std::endl;
+
 	snd_pcm_hw_params_get_rate(params, &tmp, 0);
 	std::cout << "ALSA output device rate:        " << tmp << std::endl;
 
 	snd_pcm_hw_params_get_period_size(params, &m_frames, &dir);
 
-	buff_size = m_frames * m_channels;
+	m_buffSize = m_frames * m_channels;
 
 	std::cout << "ALSA output device frames size: " << m_frames << std::endl;
 
-	std::cout << "ALSA output device buffer size: " << buff_size << "(should be 1024)" << std::endl;
+	std::cout << "ALSA output device buffer size: " << m_buffSize << "(should be 1024)" << std::endl;
 
 	return 0;
 }
@@ -109,7 +122,7 @@ int ALSAPlayer::writeAudio(byte* buffer, uint32_t buffSize)
 		return -1;
 	}
 
-	if((pcmRetVal = snd_pcm_writei(pcm_handle, buffer, m_frames)) == -EPIPE)
+	if((pcmRetVal = snd_pcm_writei(pcm_handle, buffer, buffSize)) == -EPIPE)
 	{
 		snd_pcm_prepare(pcm_handle);
 	}
@@ -124,3 +137,14 @@ int ALSAPlayer::closePlayer()
 {
 	return 0;
 }
+
+uint32_t ALSAPlayer::getChannelCount()
+{
+	return m_channels;
+}
+
+uint32_t ALSAPlayer::getBuffSize()
+{
+	return m_buffSize;
+}
+

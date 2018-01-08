@@ -11,6 +11,7 @@
 #include <alsa/asoundlib.h>
 #include <stdio.h>
 #include "Types.hpp"
+#include <vector>
 
 #define PCM_DEVICE "default"
 
@@ -22,6 +23,7 @@ struct ALSAConfig{
 class ALSAPlayer{
 
 public:
+	ALSAPlayer() : pcm_handle(nullptr), pcm(0), params(nullptr), m_rate(0), m_channels(0), m_buffSize(0), m_frames(0) {}
 
 	int32_t initPlayer(ALSAConfig cfg);
 
@@ -29,16 +31,21 @@ public:
 
 	int closePlayer();
 
+	uint32_t getChannelCount();
+
+	uint32_t getBuffSize();
+
 private:
 
 	snd_pcm_t* pcm_handle;
 
-	uint32_t pcm;
+	int32_t pcm;
 
 	snd_pcm_hw_params_t* params;
 
 	uint32_t m_rate;
 	uint32_t m_channels;
+	uint32_t m_buffSize;
 
 	snd_pcm_uframes_t m_frames;
 

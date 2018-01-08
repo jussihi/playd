@@ -15,7 +15,7 @@
 #include "s3mContainer.hpp"
 #include "ALSAPlayer.hpp"
 
-static const uint32_t SamplingRate = 44100;
+static const uint32_t SamplingRate = 48000;
 
 s3mContainer::s3mContainer()
 :
@@ -23,9 +23,11 @@ m_name("")
 {
 	m_player = new ALSAPlayer;
 	ALSAConfig cfg;
-	cfg.channels = 1;
+	cfg.channels = 2;
 	cfg.rate = SamplingRate;
 	m_player->initPlayer(cfg);
+	m_audioBufferSize = m_player->getBuffSize();
+	m_MBuffer = new MultiBuffer(4, m_audioBufferSize);
 }
 
 s3mContainer::~s3mContainer()
@@ -48,6 +50,26 @@ double s3mContainer::loadSample(const Instrument& ins, double& s, double incRate
 	}
 
 	return retVal;
+}
+
+bool s3mContainer::loadStereoSample(const Instrument& ins, double& s, double incRate, double& retL, double& retR)
+{
+	if(s >= ins.length)
+	{
+		return false;
+	}
+
+	retL = ins.sampleDataL[(uint32_t)s] - 128.0;
+	retR = ins.sampleDataR[(uint32_t)s] - 128.0;
+
+	s += incRate;
+
+	if((ins.flags & 1) && s >= ins.loopEnd)
+	{
+		s = ins.loopBegin + fmod(s - ins.loopBegin, ins.loopEnd - ins.loopBegin);
+	}
+
+	return true;
 }
 
 static int periodic = 0;
@@ -191,11 +213,30 @@ void s3mContainer::loadSong(const char* filename)
 			assert(ins.loopBegin < ins.length);
 			assert(ins.loopEnd <= ins.length);
 		}
-		uint32_t smppos = ins.memSeg[1]*0x10 + ins.memSeg[2]*0x1000 + ins.memSeg[0]*0x100000;
-		fseek(fp, smppos, SEEK_SET);
-		ins.sampleData = new byte[ins.length];
-		assert(ins.sampleData != NULL);
-		fread(ins.sampleData, 1, ins.length, fp);
+
+		if(ins.flags & 2)
+		{
+			std::cout << ins.name << "stereo == TRUE" << std::endl;
+			ins.stereo = true;
+			uint32_t smppos = ins.memSeg[1]*0x10 + ins.memSeg[2]*0x1000 + ins.memSeg[0]*0x100000;
+			fseek(fp, smppos, SEEK_SET);
+			fseek(fp, ins.length, SEEK_CUR);
+			ins.sampleDataL = new byte[ins.length];
+			assert(ins.sampleDataL != NULL);
+			fread(ins.sampleDataL, 1, ins.length, fp);
+			ins.sampleDataR = new byte[ins.length];
+			assert(ins.sampleDataR != NULL);
+			fread(ins.sampleDataR, 1, ins.length, fp);
+		}
+		else
+		{
+			uint32_t smppos = ins.memSeg[1]*0x10 + ins.memSeg[2]*0x1000 + ins.memSeg[0]*0x100000;
+			fseek(fp, smppos, SEEK_SET);
+			ins.sampleData = new byte[ins.length];
+			assert(ins.sampleData != NULL);
+			fread(ins.sampleData, 1, ins.length, fp);
+		}
+
 
 		ins.c4SpeedFactor = (229079296.0 / ins.c4Speed);
 
@@ -231,7 +272,8 @@ void s3mContainer::playSong()
 
 	double arpeggioInterval = SamplingRate / 50.0;
 	double frameDuration = 2.5 * SamplingRate / m_initialTempo;
-	double hertzRatio =  14317056.0 / (double)SamplingRate;
+	//double hertzRatio =  14317056.0 / (double)SamplingRate;
+	double hertzRatio =  14317056.0 / (double)SamplingRate / 2;
 	double VolumeNormalizer = (m_masterVolume & 127) * m_globalVolume / 1048576.0;
 	double currTime = 0.0;
 	double NoteHzTable[16];
@@ -606,9 +648,7 @@ void s3mContainer::playSong()
 							{
 								ch.volume = 64;
 							}
-
 						}
-
 
 						if(ch.livePeriod != 0.0)
 						{
@@ -621,11 +661,15 @@ void s3mContainer::playSong()
 					uint32_t numSamplesToMix = frameEndsAt - currTime;
 
 					static uint32_t mixBuffPos = 0;
-					byte mixBuff[1024];
+					//std::vector<byte> mixBuff;
+					//mixBuff.resize(m_audioBufferSize, 128);
+					byte* mixBuff = m_MBuffer->getNextBuffer();
+					//std::cout << m_audioBufferSize << std::endl;
 
 					for(uint32_t i = 0; i < numSamplesToMix; ++i)
 					{
-						double res = 0.0;
+						double resL = 0.0;
+						double resR = 0.0;
 						for(int j = 0; j < 32; ++j)
 						{
 							Channel& ch = channel[j];
@@ -651,18 +695,60 @@ void s3mContainer::playSong()
 								uint32_t position = fmod(currTime / arpeggioInterval, 3.0);
 								currHz *= NoteHzTable[(ch.arpeggio >> (position * 4)) & 0x0F];
 							}
+							//resL += ch.volume * loadSample(ins, ch.sampleOffset, currHz);
+							//resR += ch.volume * loadSample(ins, ch.sampleOffset, currHz);
+							if(ins.stereo)
+							{
+								double tempL = 0.0;
+								double tempR = 0.0;
+								if(loadStereoSample(ins, ch.sampleOffset, currHz, tempL, tempR))
+								{
+									std::cout << "loaded stereo sample" << std::endl;
+									resL += ch.volume * tempL;
+									resR += ch.volume * tempR;
+								}
 
-							res += ch.volume * loadSample(ins, ch.sampleOffset, currHz);
+							}
+							else
+							{
+								resL += ch.volume * loadSample(ins, ch.sampleOffset, currHz);
+								resR += ch.volume * loadSample(ins, ch.sampleOffset, currHz);
+							}
+
 						}
-						int retVal = res * VolumeNormalizer;
+						int normalizedL = resL * VolumeNormalizer;
+						int normalizedR = resR * VolumeNormalizer;
+
+						//int retVal = res;
+
+						//std::cout << "VolumeNormalizer: " << VolumeNormalizer << std::endl;
 
 						// force retVal to be unsigned 0-255 (8bit)
-						retVal = (retVal) < (-128) ? (-128) : (retVal);
-						retVal = (retVal) > (127) ? (127) : (retVal);
-						mixBuff[mixBuffPos++] = retVal + 128;
-						if(mixBuffPos >= 1024)
+						//if(retVal < -128 || retVal > 127)
+						//{
+						//	std::cout << retVal << std::endl;
+						//}
+						normalizedL = (normalizedL) < (-128) ? (-128) : (normalizedL);
+						normalizedL = (normalizedL) > (127) ? (127) : (normalizedL);
+						normalizedR = (normalizedR) < (-128) ? (-128) : (normalizedR);
+						normalizedR = (normalizedR) > (127) ? (127) : (normalizedR);
+						mixBuff[mixBuffPos*2] = normalizedL + 128;
+						mixBuff[mixBuffPos*2+1] = normalizedR + 128;
+						//std::cout << retVal + 128 << std::endl;
+						mixBuffPos++;
+						if(mixBuffPos >= m_audioBufferSize/2)
 						{
-							m_player->writeAudio(mixBuff, 1024);
+							int luku = 0;
+							//std::cout << mixBuff.size() << std::endl;
+							/*if(mixBuff.size() > 0)
+							{
+								for(std::vector<byte>::iterator i = mixBuff.begin(); i != mixBuff.end(); i++)
+								{
+									std::cout << luku++ << "\t\t" << (uint32_t)*i << std::endl;
+								}
+							}*/
+							//std::cout << mixBuffPos << std::endl;
+							m_player->writeAudio(mixBuff, m_audioBufferSize/2);
 							mixBuffPos = 0;
 							periodic++;
 							//std::cout << periodic << std::endl;
