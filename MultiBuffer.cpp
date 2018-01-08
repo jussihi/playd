@@ -27,7 +27,6 @@ MultiBuffer::~MultiBuffer()
 
 byte* MultiBuffer::getNextBuffer()
 {
-	std::cout << m_currPosition << std::endl;
 	if(m_bufferList.empty())
 	{
 		return nullptr;

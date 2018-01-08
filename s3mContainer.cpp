@@ -27,7 +27,7 @@ m_name("")
 	cfg.rate = SamplingRate;
 	m_player->initPlayer(cfg);
 	m_audioBufferSize = m_player->getBuffSize();
-	m_MBuffer = new MultiBuffer(4, m_audioBufferSize);
+	m_MBuffer = new MultiBuffer(1, m_audioBufferSize);
 }
 
 s3mContainer::~s3mContainer()
