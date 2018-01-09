@@ -1,7 +1,7 @@
 CPP      = g++
 CC       = gcc
-OBJ      = main.o s3mContainer.o ALSAPlayer.o MultiBuffer.o
-LINKOBJ  = main.o s3mContainer.o ALSAPlayer.o MultiBuffer.o
+OBJ      = main.o s3mContainer.o ALSAPlayer.o
+LINKOBJ  = main.o s3mContainer.o ALSAPlayer.o
 LIBS     = -lasound
 CXXFLAGS = -std=c++14 -Wall -g
 BIN	 = playd
@@ -21,9 +21,6 @@ s3mContainer.o: s3mContainer.cpp
 
 ALSAPlayer.o: ALSAPlayer.cpp
 	$(CPP) -c ALSAPlayer.cpp -o ALSAPlayer.o $(CXXFLAGS)
-
-MultiBuffer.o: MultiBuffer.cpp
-	$(CPP) -c MultiBuffer.cpp -o MultiBuffer.o $(CXXFLAGS)
 
 .PHONY : clean
 clean : 

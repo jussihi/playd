@@ -26,9 +26,6 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 	m_frames = 1024;
 
 	uint32_t tmp;
-	uint32_t buff_size;
-
-	snd_pcm_uframes_t frames;
 
 	int dir = 0;
 
@@ -71,7 +68,6 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 	{
 		printf("ERROR: Can't set the number of periods. Error message: %s\n", snd_strerror(pcm));
 	}
-	unsigned int u = 2;
 
 	// force the ALSA interface to use exactly *m_frames* number of frames
 

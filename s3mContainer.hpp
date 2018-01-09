@@ -40,9 +40,19 @@ struct Instrument{
 	Instrument () :
 		type(0),
 		length(0),
+		HIleng(0),
 		loopBegin(0),
+		HILbeg(0),
 		loopEnd(0),
+		HILend(0),
+		volume(0),
+		packFlag(0),
+		flags(0),
 		c4Speed(0),
+		sampleData(nullptr),
+		sampleDataL(nullptr),
+		sampleDataR(nullptr),
+		c4SpeedFactor(0.0),
 		stereo(false)
 	{}
 };
@@ -66,15 +76,24 @@ struct Channel{
 	uint32_t cacheArpeggio;
 
 	Channel() :
+		lastInstrument(0),
 		baseNote(255),
+		sampleOffset(0.0),
 		vibratoOffset(0),
 		livePeriod(0.0),
+		slideToPeriod(0.0),
 		stablePeriod(0),
 		liveHz(0.0),
 		volume(0),
 		arpeggio(0),
-		cachePortamento(0)
-
+		cacheVolumeSlide(0),
+		cachePitchSlide(0),
+		cacheVibratoHi(0),
+		cacheVibratoLo(0),
+		cacheTremoloHi(0),
+		cacheTremoloLo(0),
+		cachePortamento(0),
+		cacheArpeggio(0)
 	{}
 };
 
@@ -106,7 +125,7 @@ public:
 	 * @param filename: the filename to load. Should be in
 	 * the same folder where the program is being run.
 	 */
-	void loadSong(const char* filename);
+	void loadSong(const std::string& filename);
 
 	/*
 	 * Play song that is currently loaded
@@ -129,49 +148,48 @@ private:
 	/*
 	 * Member variables
 	 */
-	char m_name[29];					// name, 28 chars with ending NUL
-	byte m_type;						// File type = 16
+	char m_name[29];								// name, 28 chars with ending NUL
+	byte m_type;									// File type = 16
 
-	uint16_t m_ordersNum;				// Number of orders in file
-	uint16_t m_instrumentNum;			// Number of instruments in file
-	uint16_t m_patternNum;				// number of patterns
-	uint16_t m_flags;					// flags, unsupported in latest tracker ver
-	uint16_t m_cwtv;					// created with tracker version
-	uint16_t m_ffv;						// File format version
+	uint16_t m_ordersNum;							// Number of orders in file
+	uint16_t m_instrumentNum;						// Number of instruments in file
+	uint16_t m_patternNum;							// number of patterns
+	uint16_t m_flags;								// flags, unsupported in latest tracker ver
+	uint16_t m_cwtv;								// created with tracker version
+	uint16_t m_ffv;									// File format version
 
-	char m_scrm[4];						// should contain SCRM
+	char m_scrm[4];									// should contain SCRM
 
-	byte m_globalVolume;				// global volume
-	byte m_initialSpeed;				// initial speed
-	byte m_initialTempo; 				// initial tempo
-	byte m_masterVolume;				// master volume
+	byte m_globalVolume;							// global volume
+	byte m_initialSpeed;							// initial speed
+	byte m_initialTempo; 							// initial tempo
+	byte m_masterVolume;							// master volume
 
-	uint16_t m_special;					// Special pointer, not used in ver 3
+	uint16_t m_special;								// Special pointer, not used in ver 3
 
-	byte m_channelSettings[32];			// Channel setting for all 32 channels!
-										// bit 8: channel enabled
-										// bits 0-7: channel type
-										// 0..7 Left sample, 8..15 right sample, 16..31 Adlib channels (9 melody + 5 drums)
+	byte m_channelSettings[32];						// Channel setting for all 32 channels!
+													// bit 8: channel enabled
+													// bits 0-7: channel type
+													// 0..7 Left sample, 8..15 right sample, 16..31 Adlib channels (9 melody + 5 drums)
 
-	std::unique_ptr<byte[]> m_orders;	// orders stored in a byte array
+	std::vector<byte> m_orders;						// orders stored in a vector
 
-	std::unique_ptr<uint16_t[]> m_instrumentPPs;	// parapointers to instrus
-	std::unique_ptr<uint16_t[]> m_patternPPs;		// parapointers to patterns
+	std::vector<uint16_t> m_instrumentPPs;			// file parapointers to instruments
+	std::vector<uint16_t> m_patternPPs;				// file parapointers to patterns
 
-	std::unique_ptr<Instrument[]> m_instruments;	// instrument array
+	std::vector<Instrument> m_instruments;			// instrument vector
 
-	byte** m_patternData;
-	byte** m_patternEnd;
 
-	// TODO:
-	// std::vector<std::shared_ptr<byte[]>> m_patternData;	// pattern data
-	// std::vector<std::shared_ptr<byte[]>> m_patternEnd;	// pattern endings
+	std::vector<std::vector<byte>> m_patternData;	// store pattern data here
+	std::vector<byte*> m_patternEndPtr;				// store pattern end pointers here
 
-	ALSAPlayer* m_player;				// ALSA Player class
+	ALSAPlayer* m_player;							// ALSA Player class
 
-	uint32_t m_audioBufferSize;			// size of audio buffer
+	uint32_t m_audioBufferSize;						// size of audio buffer
 
-	MultiBuffer* m_MBuffer;				// multibuffer class instance
+	std::vector<byte> m_audioBufferVector;			//placeholder for audio buffer as vector
+
+	byte* m_audioBuffer;							// placeholder for audio buffer
 
 }; // end class s3mContainer
 

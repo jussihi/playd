@@ -17,7 +17,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 	s3mContainer player;
-	player.loadSong(argv[1]);
+	std::string songName(argv[1]);
+	player.loadSong(songName);
 	player.playSong();
 	return 0;
 }
