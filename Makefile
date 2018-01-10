@@ -2,7 +2,7 @@ CPP      = g++
 CC       = gcc
 OBJ      = main.o s3mContainer.o ALSAPlayer.o
 LINKOBJ  = main.o s3mContainer.o ALSAPlayer.o
-LIBS     = -lasound
+LIBS     = -lasound -lpthread
 CXXFLAGS = -std=c++14 -Wall -g
 BIN	 = playd
 

@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include "s3mContainer.hpp"
 #include "ALSAPlayer.hpp"
+#include <thread>
 
 static const uint32_t SamplingRate = 48000;
 
@@ -28,8 +29,8 @@ m_name("")
 	cfg.rate = SamplingRate;
 	m_player->initPlayer(cfg);
 	m_audioBufferSize = m_player->getBuffSize();
-	m_audioBuffer = new byte[m_audioBufferSize];
-	m_audioBufferVector.reserve(m_audioBufferSize);
+	m_audioBufferVector.resize(m_audioBufferSize);
+	m_playerStatusFlags = 0;
 }
 
 s3mContainer::~s3mContainer()
@@ -264,7 +265,6 @@ void s3mContainer::loadSong(const std::string& filename)
 
 void s3mContainer::playSong()
 {
-
 	// make channel a class instead of a struct, include the idle base not setting in the constructor of the class
 
 	Channel channel[32];
@@ -340,6 +340,10 @@ void s3mContainer::playSong()
 					const byte* rowptr = pCurrPattern;
 					while( *rowptr != 0)
 					{
+					    if(m_playerStatusFlags == 1)
+					    {
+					        return;
+					    }
 						Slot currSlot = readSlot(rowptr);
 
 						Channel& ch = channel[currSlot.channel];
@@ -772,4 +776,9 @@ void s3mContainer::playSong()
 		}
 
 	} // end of while
+}
+
+void s3mContainer::requestQuit()
+{
+    m_playerStatusFlags = 1;
 }

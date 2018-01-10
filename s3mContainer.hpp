@@ -10,7 +10,6 @@
 
 #include "Types.hpp"
 #include "ALSAPlayer.hpp"
-#include "MultiBuffer.hpp"
 #include <stdio.h>
 #include <vector>
 #include <memory>
@@ -132,6 +131,11 @@ public:
 	 */
 	void playSong();
 
+	/*
+	 * Request closing of the player
+	 */
+	void requestQuit();
+
 
 private:
 
@@ -148,48 +152,50 @@ private:
 	/*
 	 * Member variables
 	 */
-	char m_name[29];								// name, 28 chars with ending NUL
-	byte m_type;									// File type = 16
+	char m_name[29];							// name, 28 chars with ending NUL
+	byte m_type;								// File type = 16
 
 	uint16_t m_ordersNum;							// Number of orders in file
 	uint16_t m_instrumentNum;						// Number of instruments in file
 	uint16_t m_patternNum;							// number of patterns
-	uint16_t m_flags;								// flags, unsupported in latest tracker ver
-	uint16_t m_cwtv;								// created with tracker version
-	uint16_t m_ffv;									// File format version
+	uint16_t m_flags;							// flags, unsupported in latest tracker ver
+	uint16_t m_cwtv;							// created with tracker version
+	uint16_t m_ffv;								// File format version
 
-	char m_scrm[4];									// should contain SCRM
+	char m_scrm[4];								// should contain SCRM
 
 	byte m_globalVolume;							// global volume
 	byte m_initialSpeed;							// initial speed
 	byte m_initialTempo; 							// initial tempo
 	byte m_masterVolume;							// master volume
 
-	uint16_t m_special;								// Special pointer, not used in ver 3
+	uint16_t m_special;							// Special pointer, not used in ver 3
 
 	byte m_channelSettings[32];						// Channel setting for all 32 channels!
-													// bit 8: channel enabled
-													// bits 0-7: channel type
-													// 0..7 Left sample, 8..15 right sample, 16..31 Adlib channels (9 melody + 5 drums)
+										// bit 8: channel enabled
+										// bits 0-7: channel type
+										// 0..7 Left sample, 8..15 right sample, 16..31 Adlib channels (9 melody + 5 drums)
 
 	std::vector<byte> m_orders;						// orders stored in a vector
 
-	std::vector<uint16_t> m_instrumentPPs;			// file parapointers to instruments
-	std::vector<uint16_t> m_patternPPs;				// file parapointers to patterns
+	std::vector<uint16_t> m_instrumentPPs;					// file parapointers to instruments
+	std::vector<uint16_t> m_patternPPs;					// file parapointers to patterns
 
-	std::vector<Instrument> m_instruments;			// instrument vector
+	std::vector<Instrument> m_instruments;					// instrument vector
 
 
-	std::vector<std::vector<byte>> m_patternData;	// store pattern data here
-	std::vector<byte*> m_patternEndPtr;				// store pattern end pointers here
+	std::vector<std::vector<byte>> m_patternData;				// store pattern data here
+	std::vector<byte*> m_patternEndPtr;					// store pattern end pointers here
 
 	ALSAPlayer* m_player;							// ALSA Player class
 
 	uint32_t m_audioBufferSize;						// size of audio buffer
 
-	std::vector<byte> m_audioBufferVector;			//placeholder for audio buffer as vector
+	std::vector<byte> m_audioBufferVector;					//placeholder for audio buffer as vector
 
-	byte* m_audioBuffer;							// placeholder for audio buffer
+	std::vector<std::string> m_playList;                                    // playlist
+
+	uint32_t m_playerStatusFlags;                                           // player status flags
 
 }; // end class s3mContainer
 
