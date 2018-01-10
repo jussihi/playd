@@ -71,13 +71,17 @@ int main(int argc, char** argv)
         {
             // parse play command
         }
-        else if(readCmd.length() >= 5 && readCmd.substr(5) == "pause")
+        else if(readCmd == "pause")
         {
-            // parse pause command
+            player->pause();
         }
-        else if(readCmd.length() >= 8 &&readCmd.substr(8) == "playlist")
+        else if(readCmd.length() >= 8 && readCmd.substr(8) == "playlist")
         {
             // parse playlist command
+        }
+        else if(readCmd == "resume")
+        {
+            player->resume();
         }
     }
     player->requestQuit();

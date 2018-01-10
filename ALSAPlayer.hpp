@@ -16,38 +16,38 @@
 #define PCM_DEVICE "default"
 
 struct ALSAConfig{
-	uint32_t channels;
-	uint32_t rate;
+    uint32_t channels;
+    uint32_t rate;
 };
 
 class ALSAPlayer{
 
 public:
-	ALSAPlayer() : pcm_handle(nullptr), pcm(0), params(nullptr), m_rate(0), m_channels(0), m_buffSize(0), m_frames(0) {}
+    ALSAPlayer() : pcm_handle(nullptr), pcm(0), params(nullptr), m_rate(0), m_channels(0), m_buffSize(0), m_frames(0) {}
 
-	int32_t initPlayer(ALSAConfig cfg);
+    int32_t initPlayer(ALSAConfig cfg);
 
-	int writeAudio(byte* buffer, uint32_t buffSize);
+    int writeAudio(byte* buffer, uint32_t buffSize);
 
-	int closePlayer();
+    int closePlayer();
 
-	uint32_t getChannelCount();
+    uint32_t getChannelCount();
 
-	uint32_t getBuffSize();
+    uint32_t getBuffSize();
 
 private:
 
-	snd_pcm_t* pcm_handle;
+    snd_pcm_t* pcm_handle;
 
-	int32_t pcm;
+    int32_t pcm;
 
-	snd_pcm_hw_params_t* params;
+    snd_pcm_hw_params_t* params;
 
-	uint32_t m_rate;
-	uint32_t m_channels;
-	uint32_t m_buffSize;
+    uint32_t m_rate;
+    uint32_t m_channels;
+    uint32_t m_buffSize;
 
-	snd_pcm_uframes_t m_frames;
+    snd_pcm_uframes_t m_frames;
 
 }; // end class ALSAPlayer
 
