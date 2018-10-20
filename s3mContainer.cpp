@@ -21,18 +21,24 @@ static const uint32_t SamplingRate = 48000;
 
 s3mContainer::s3mContainer() : m_name("")
 {
-    m_player = new ALSAPlayer;
     ALSAConfig cfg;
     cfg.channels = 2;
     cfg.rate = SamplingRate;
-    m_player->initPlayer(cfg);
-    m_audioBufferSize = m_player->getBuffSize();
+    m_player.initPlayer(cfg);
+    m_audioBufferSize = m_player.getBuffSize();
     m_audioBufferVector.resize(m_audioBufferSize);
     m_playerStatusFlags = 0;
 }
 
 s3mContainer::~s3mContainer()
 {
+    /* fuckin ugly, use smart pointers! */
+    for(auto it = m_instruments.begin(); it != m_instruments.end(); it++)
+    {
+        if(it->sampleData) delete[] it->sampleData;
+        if(it->sampleDataL) delete[] it->sampleDataL;
+        if(it->sampleDataR) delete[] it->sampleDataR;
+    }
 }
 
 double s3mContainer::loadSample(const Instrument& ins, double& s, double incRate)
@@ -732,7 +738,7 @@ void s3mContainer::playSong()
 
                         if(mixBuffPos >= m_audioBufferSize/2)
                         {
-                            m_player->writeAudio(static_cast<byte*>(&m_audioBufferVector[0]), m_audioBufferSize/2);
+                            m_player.writeAudio(static_cast<byte*>(&m_audioBufferVector[0]), m_audioBufferSize/2);
                             mixBuffPos = 0;
                             periodic++;
                         }

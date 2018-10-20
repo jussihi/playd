@@ -8,6 +8,17 @@
 #include "ALSAPlayer.hpp"
 #include <iostream>
 
+/* dtor */
+ALSAPlayer::~ALSAPlayer()
+{
+  if(pcm_handle)
+  {
+    snd_pcm_drop(pcm_handle);
+    snd_pcm_drain(pcm_handle);
+    snd_pcm_close(pcm_handle);
+    snd_config_update_free_global();
+  }
+}
 
 int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 {
@@ -35,6 +46,7 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 
     if (pcm < 0)
     {
+        pcm_handle = nullptr;
         printf("ERROR: Can't open \"%s\" PCM device. %s\n", PCM_DEVICE, snd_strerror(pcm));
     }
     snd_pcm_hw_params_alloca(&params);
@@ -105,11 +117,17 @@ int32_t ALSAPlayer::initPlayer(ALSAConfig cfg)
 
     std::cout << "ALSA output device buffer size: " << m_buffSize << "(should be 1024)" << std::endl;
 
+    m_init = true;
+
     return 0;
 }
 
 int ALSAPlayer::writeAudio(byte* buffer, uint32_t buffSize)
 {
+    if(!m_init)
+    {
+        return -2;
+    }
     int pcmRetVal;
     if(buffSize == 0)
     {
@@ -131,6 +149,7 @@ int ALSAPlayer::writeAudio(byte* buffer, uint32_t buffSize)
 
 int ALSAPlayer::closePlayer()
 {
+    /* Do some extra cleanup here if needed, maybe a dummy function? */
     return 0;
 }
 

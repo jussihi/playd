@@ -197,9 +197,9 @@ private:
     std::vector<std::vector<byte>> m_patternData;			// store pattern data here
     std::vector<byte*> m_patternEndPtr;					// store pattern end pointers here
 
-    ALSAPlayer* m_player;						// ALSA Player class
+    ALSAPlayer m_player;						          // ALSA Player class
 
-    uint32_t m_audioBufferSize;						// size of audio buffer
+    uint32_t m_audioBufferSize;						   // size of audio buffer
 
     std::vector<byte> m_audioBufferVector;				//placeholder for audio buffer as vector
 

@@ -23,7 +23,9 @@ struct ALSAConfig{
 class ALSAPlayer{
 
 public:
-    ALSAPlayer() : pcm_handle(nullptr), pcm(0), params(nullptr), m_rate(0), m_channels(0), m_buffSize(0), m_frames(0) {}
+    ALSAPlayer() : pcm_handle(nullptr), pcm(0), params(nullptr), m_rate(0), m_channels(0), m_buffSize(0), m_frames(0), m_init(false) {}
+
+    ~ALSAPlayer();
 
     int32_t initPlayer(ALSAConfig cfg);
 
@@ -48,6 +50,8 @@ private:
     uint32_t m_buffSize;
 
     snd_pcm_uframes_t m_frames;
+
+    bool m_init;
 
 }; // end class ALSAPlayer
 
